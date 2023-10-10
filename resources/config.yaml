@@ -1,0 +1,10 @@
+# 日志配置
+Level: info
+EncoderType: console
+Path: /var/log/fuyao-controller
+FileName: root.log
+MaxSize: 20
+MaxBackups: 2
+MaxAge: 7
+Compress: true
+OutMod: console
