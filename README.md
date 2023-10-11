@@ -31,6 +31,8 @@ OutMod: console     # 输出模式，支持：console——输出到控制台；
 ## 使用方法
 
 ### 基本用法
+
+zlog 中封装了 zap 的基本使用方法，如 Info、Infof、Infow等。如想使用更多的 zap 日志工能。可以调用 `zlog.Logger`。
 ```go
 import (
 	"github.com/zhangxyjlu/zlog"
@@ -54,6 +56,8 @@ func main() {
 ```
 
 ### 支持自定义配置获取 Logger 对象
+
+默认的Logger对象和配置文件绑定，且监听配置文件修改。可以通过 `zlog.GetLogger(Conf)` 获取不同的日志配置，根据逻辑输出到不同的文件等。
 ```go
 	Conf := &zlog.LogConfig{
 		Level:       "info",
@@ -69,7 +73,7 @@ func main() {
 
 ## 动态配置
 
-支持热加载配置文件，程序运行时，可以动态修改配置文件，热生效。
+支持热加载配置文件，程序运行时，可以动态修改配置文件，热生效。如修改日志级别等。
 
 ## 其他用法
 
