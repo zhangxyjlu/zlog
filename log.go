@@ -1,6 +1,7 @@
 package zlog
 
 import (
+	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/natefinch/lumberjack"
 	"github.com/spf13/viper"
@@ -12,7 +13,9 @@ import (
 	"sync"
 )
 
-const DefaultLogPath = "/var/log"
+const (
+	defaultLogPath = "/var/log"
+)
 
 var Logger *zap.SugaredLogger
 
@@ -42,16 +45,39 @@ func init() {
 	var conf *LogConfig
 	var err error
 	if conf, err = loadConfig(); err != nil {
+		fmt.Printf("loadConfig fail err is %v. use DefaultConf\n", err)
 		conf = getDefaultConf()
 	}
 	Logger = GetLogger(conf)
+}
+
+func loadConfig() (*LogConfig, error) {
+	exePath, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	// 获取项目根目录
+	rootDir := filepath.Dir(exePath)
+	// 构建配置文件的完整路径
+	configFilePath := filepath.Join(rootDir, "resources")
+	viper.AddConfigPath(configFilePath)
+	// 设置要读取的配置文件名（例如：config.yaml）
+	viper.SetConfigName("config")
+	// 设置配置文件类型（例如：yaml、json）
+	viper.SetConfigType("yaml")
+	config, err := parseConfig()
+	if err != nil {
+		return nil, err
+	}
+	watchConfig()
+	return config, nil
 }
 
 func getDefaultConf() *LogConfig {
 	var defaultConf = &LogConfig{
 		Level:       "info",
 		EncoderType: "console",
-		Path:        DefaultLogPath,
+		Path:        defaultLogPath,
 		FileName:    "root.log",
 		MaxSize:     20,
 		MaxBackups:  0,
@@ -66,7 +92,7 @@ func getDefaultConf() *LogConfig {
 	}
 	// 获取运行文件名称，作为/var/log目录下的子目录
 	serviceName := strings.TrimSuffix(filepath.Base(exePath), filepath.Ext(filepath.Base(exePath)))
-	defaultConf.Path = filepath.Join(DefaultLogPath, serviceName)
+	defaultConf.Path = filepath.Join(defaultLogPath, serviceName)
 	return defaultConf
 }
 
@@ -80,20 +106,6 @@ func GetLogger(conf *LogConfig) *zap.SugaredLogger {
 	core := zapcore.NewCore(encoder, writeSyncer, level)
 	logger := zap.New(core, zap.AddCaller())
 	return logger.Sugar()
-}
-
-func loadConfig() (*LogConfig, error) {
-	viper.AddConfigPath("./resources")
-	// 设置要读取的配置文件名（例如：config.yaml）
-	viper.SetConfigName("config")
-	// 设置配置文件类型（例如：yaml、json）
-	viper.SetConfigType("yaml")
-	config, err := parseConfig()
-	if err != nil {
-		return nil, err
-	}
-	watchConfig()
-	return config, nil
 }
 
 func watchConfig() {
